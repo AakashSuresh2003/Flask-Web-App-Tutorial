@@ -13,17 +13,17 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     db.init_app(app)
 
+    # Register blueprints for views and auth
     from .views import views
     from .auth import auth
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User, Note
-    
-    with app.app_context():
-        db.create_all()
+    # Create the database if not exists
+    create_database(app)
 
+    # Initialize the login manager
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -36,6 +36,8 @@ def create_app():
 
 
 def create_database(app):
-    if not path.exists('website/' + DB_NAME):
-        db.create_all(app=app)
+    """This function checks if the database exists and creates it if necessary."""
+    if not path.exists('website/' + DB_NAME):  # If the database file doesn't exist
+        with app.app_context():  # Make sure to use app context when creating the DB
+            db.create_all()  # Create all tables
         print('Created Database!')
